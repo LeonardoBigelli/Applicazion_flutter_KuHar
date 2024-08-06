@@ -1,0 +1,149 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:sensors_plus/sensors_plus.dart';
+
+class Window extends ChangeNotifier {
+  List<List> _windownData = List.generate(200, (_) => List.filled(6, 0));
+  //stream per il controllo del giroscopio
+  StreamSubscription<GyroscopeEvent>? samplingGyr;
+  //strem per il controllo dell'accelerometro
+  StreamSubscription<AccelerometerEvent>? samplingAcc;
+  //stream per la scrittura dei risultati
+  StreamController<List<List<dynamic>>> _streamHandling =
+      StreamController<List<List<dynamic>>>.broadcast();
+  //current time
+  int old_time_gyr = DateTime.now().millisecond;
+  int old_time_acc = DateTime.now().millisecond;
+  //contatori
+  int countAcc = 0;
+  int countGyr = 0;
+
+  /*****************TIMER********************/
+  AccelerometerEvent? latestAccelerometerEvent;
+  GyroscopeEvent? latestGyroscopeEvent;
+  Timer? timer;
+  int currentIndex = 0;
+  /************************************/
+
+  // funzione per la creazione della finestra
+  /*
+  void createWindow(int samplingRate) {
+    samplingGyr = gyroscopeEvents.listen((GyroscopeEvent event) {
+      if (countGyr < 200) {
+        int current_time = DateTime.now().millisecond;
+        if (checkHzGyr(current_time)) {
+          _windownData[countGyr][3] = event.x;
+          _windownData[countGyr][4] = event.y;
+          _windownData[countGyr][5] = event.z;
+          countGyr++;
+          print("Campionamento giroscopio n° ${countGyr}");
+        }
+      } else {
+        _stopSamplingGyr();
+        checkFinished();
+      }
+    });
+
+    samplingAcc = accelerometerEvents.listen((AccelerometerEvent event) {
+      if (countAcc < 200) {
+        int current_time = DateTime.now().millisecond;
+        if (checkHzAcc(current_time)) {
+          _windownData[countAcc][0] = event.x;
+          _windownData[countAcc][1] = event.y;
+          _windownData[countAcc][2] = event.z;
+          countAcc++;
+          print("Campionamento acceleromentro n° ${countAcc}");
+        }
+      } else {
+        _stopSamplingAcc();
+        checkFinished();
+      }
+    });
+  }
+
+*/
+
+  //funzione alternativa che sfrutta i Timer
+  void timerWindow() {
+    samplingAcc = accelerometerEvents.listen((event) {
+      latestAccelerometerEvent = event;
+    });
+
+    samplingGyr = gyroscopeEvents.listen((event) {
+      latestGyroscopeEvent = event;
+    });
+
+    timer = Timer.periodic(Duration(milliseconds: 10), _collectSensorData);
+  }
+
+  List<List> get windownData {
+    return _windownData;
+  }
+
+  Stream<List<List<dynamic>>> get streamHandling => _streamHandling.stream;
+
+  void _stopSamplingGyr() {
+    samplingGyr?.cancel();
+  }
+
+  void _stopSamplingAcc() {
+    samplingAcc?.cancel();
+  }
+
+  bool checkHzAcc(int current_time) {
+    bool ris = true;
+    if ((current_time - this.old_time_acc > 12) &&
+        (current_time - this.old_time_acc < 8)) {
+      //range <8 e > 12 (+-2), vengono accettate distanze di 9,10,11 ms
+      ris = false;
+    }
+    this.old_time_acc = current_time;
+
+    return ris;
+  }
+
+  bool checkHzGyr(int current_time) {
+    bool ris = true;
+    if ((current_time - this.old_time_gyr > 12) &&
+        (current_time - this.old_time_gyr < 8)) {
+      ris = false;
+    }
+    this.old_time_gyr = current_time;
+
+    return ris;
+  }
+
+  void checkFinished() {
+    if (countAcc == 200 && countGyr == 200) {
+      countAcc = 0;
+      countGyr = 0;
+      //notifica al provider
+      notifyListeners();
+    }
+  }
+
+  void _collectSensorData(Timer timer) {
+    if (currentIndex < 200) {
+      if (latestAccelerometerEvent != null && latestGyroscopeEvent != null) {
+        _windownData[currentIndex][0] = latestAccelerometerEvent?.x;
+        _windownData[currentIndex][1] = latestAccelerometerEvent?.y;
+        _windownData[currentIndex][2] = latestAccelerometerEvent?.z;
+        _windownData[currentIndex][3] = latestGyroscopeEvent?.x;
+        _windownData[currentIndex][4] = latestGyroscopeEvent?.y;
+        _windownData[currentIndex][5] = latestGyroscopeEvent?.z;
+        print("Campionato acc e gyr n° ${currentIndex}");
+        currentIndex++;
+      }
+    } else {
+      timer.cancel();
+      samplingAcc?.cancel();
+      samplingGyr?.cancel();
+      //add to the stream
+      _streamHandling.add(_windownData);
+      //clear the window data
+      _windownData.clear();
+      notifyListeners();
+    }
+  }
+}
