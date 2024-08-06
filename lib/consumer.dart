@@ -4,25 +4,26 @@ import 'package:ku_har_app/interpreter.dart';
 //class to listen the data stream and do inference on the data
 class Consumer {
   //stream vero e proprio
-  late Stream<List<List<dynamic>>> _sensorDataStream;
+  late Stream<List<List<double>>> _sensorDataStream;
   //sottoscrizione allo stream
-  late StreamSubscription<List<List<dynamic>>> _streamHandling;
+  late StreamSubscription<List<List<double>>> _streamHandling; //dato struttura
   // stream per i risultati
   final StreamController<int> _streamResults =
       StreamController<int>.broadcast();
   late InterpreterTf interpreter;
   late int _inferenceResult;
 
-  //costructor
+  //constructor
   Consumer(this._sensorDataStream, String modelName) {
     interpreter = InterpreterTf(modelName);
     _streamHandling = _sensorDataStream.listen((window) {
+      print("dato letto: $window");
       _doInference(window);
     });
   }
 
   //run inference
-  void _doInference(List<List<dynamic>> window) {
+  void _doInference(List<List<double>> window) {
     interpreter.runIference(window);
     _inferenceResult = interpreter.output;
     _streamResults.add(_inferenceResult);

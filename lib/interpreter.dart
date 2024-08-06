@@ -8,9 +8,11 @@ class InterpreterTf extends ChangeNotifier {
   //costructor
   InterpreterTf(this.modelName);
 
-  void runIference(List<List> inputData) async {
+  void runIference(List<List<double>> inputData) async {
     //output tensor definition
     var outputData = List.filled(1 * 10, 0).reshape([1, 10]); //10 classes
+    print('input: $inputData');
+    print('output lenght: $outputData');
     final interpreter = await Interpreter.fromAsset('assets/${modelName}');
 
     //run inference

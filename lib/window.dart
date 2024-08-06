@@ -4,14 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 
 class Window extends ChangeNotifier {
-  List<List> _windownData = List.generate(200, (_) => List.filled(6, 0));
+  List<List<double>> _windownData =
+      List.generate(200, (_) => List.filled(6, 0));
   //stream per il controllo del giroscopio
   StreamSubscription<GyroscopeEvent>? samplingGyr;
   //strem per il controllo dell'accelerometro
   StreamSubscription<AccelerometerEvent>? samplingAcc;
   //stream per la scrittura dei risultati
-  StreamController<List<List<dynamic>>> _streamHandling =
-      StreamController<List<List<dynamic>>>.broadcast();
+  StreamController<List<List<double>>> _streamHandling =
+      StreamController<List<List<double>>>();
   //current time
   int old_time_gyr = DateTime.now().millisecond;
   int old_time_acc = DateTime.now().millisecond;
@@ -26,44 +27,6 @@ class Window extends ChangeNotifier {
   int currentIndex = 0;
   /************************************/
 
-  // funzione per la creazione della finestra
-  /*
-  void createWindow(int samplingRate) {
-    samplingGyr = gyroscopeEvents.listen((GyroscopeEvent event) {
-      if (countGyr < 200) {
-        int current_time = DateTime.now().millisecond;
-        if (checkHzGyr(current_time)) {
-          _windownData[countGyr][3] = event.x;
-          _windownData[countGyr][4] = event.y;
-          _windownData[countGyr][5] = event.z;
-          countGyr++;
-          print("Campionamento giroscopio n° ${countGyr}");
-        }
-      } else {
-        _stopSamplingGyr();
-        checkFinished();
-      }
-    });
-
-    samplingAcc = accelerometerEvents.listen((AccelerometerEvent event) {
-      if (countAcc < 200) {
-        int current_time = DateTime.now().millisecond;
-        if (checkHzAcc(current_time)) {
-          _windownData[countAcc][0] = event.x;
-          _windownData[countAcc][1] = event.y;
-          _windownData[countAcc][2] = event.z;
-          countAcc++;
-          print("Campionamento acceleromentro n° ${countAcc}");
-        }
-      } else {
-        _stopSamplingAcc();
-        checkFinished();
-      }
-    });
-  }
-
-*/
-
   //funzione alternativa che sfrutta i Timer
   void timerWindow() {
     samplingAcc = accelerometerEvents.listen((event) {
@@ -77,11 +40,12 @@ class Window extends ChangeNotifier {
     timer = Timer.periodic(Duration(milliseconds: 10), _collectSensorData);
   }
 
-  List<List> get windownData {
+  List<List<double>> get windownData {
     return _windownData;
   }
 
-  Stream<List<List<dynamic>>> get streamHandling => _streamHandling.stream;
+  //getter
+  Stream<List<List<double>>> get streamHandling => _streamHandling.stream;
 
   void _stopSamplingGyr() {
     samplingGyr?.cancel();
@@ -126,12 +90,12 @@ class Window extends ChangeNotifier {
   void _collectSensorData(Timer timer) {
     if (currentIndex < 200) {
       if (latestAccelerometerEvent != null && latestGyroscopeEvent != null) {
-        _windownData[currentIndex][0] = latestAccelerometerEvent?.x;
-        _windownData[currentIndex][1] = latestAccelerometerEvent?.y;
-        _windownData[currentIndex][2] = latestAccelerometerEvent?.z;
-        _windownData[currentIndex][3] = latestGyroscopeEvent?.x;
-        _windownData[currentIndex][4] = latestGyroscopeEvent?.y;
-        _windownData[currentIndex][5] = latestGyroscopeEvent?.z;
+        _windownData[currentIndex][0] = latestAccelerometerEvent!.x;
+        _windownData[currentIndex][1] = latestAccelerometerEvent!.y;
+        _windownData[currentIndex][2] = latestAccelerometerEvent!.z;
+        _windownData[currentIndex][3] = latestGyroscopeEvent!.x;
+        _windownData[currentIndex][4] = latestGyroscopeEvent!.y;
+        _windownData[currentIndex][5] = latestGyroscopeEvent!.z;
         print("Campionato acc e gyr n° ${currentIndex}");
         currentIndex++;
       }
@@ -140,7 +104,9 @@ class Window extends ChangeNotifier {
       samplingAcc?.cancel();
       samplingGyr?.cancel();
       //add to the stream
-      _streamHandling.add(_windownData);
+      _streamHandling.add(List<List<double>>.from(
+          _windownData.map((e) => List<double>.from(e))));
+      print(_windownData);
       //clear the window data
       _windownData.clear();
       notifyListeners();
