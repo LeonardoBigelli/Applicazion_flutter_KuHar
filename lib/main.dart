@@ -43,7 +43,12 @@ class _SensorScreenState extends State<SensorScreen> {
     });
 
     _dataConsumer =
-        Consumer(_sensorManager.streamHandling, "model_act_10_classes.tflite");
+        Consumer(_sensorManager.streamHandling, "model_act_10_classes.tflite",
+            (data, s) {
+      setState(() {
+        _dataOutput = 'Inference result: ${_dataConsumer.inferenceResult}';
+      });
+    });
 
     _sensorManager.timerWindow();
   }

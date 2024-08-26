@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 
@@ -96,7 +95,7 @@ class Window extends ChangeNotifier {
         _windownData[currentIndex][3] = latestGyroscopeEvent!.x;
         _windownData[currentIndex][4] = latestGyroscopeEvent!.y;
         _windownData[currentIndex][5] = latestGyroscopeEvent!.z;
-        print("Campionato acc e gyr n° ${currentIndex}");
+        print("Acc e gyr n° ${currentIndex}");
         currentIndex++;
       }
     } else {

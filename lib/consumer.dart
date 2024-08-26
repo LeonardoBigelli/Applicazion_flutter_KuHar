@@ -12,9 +12,11 @@ class Consumer {
       StreamController<int>.broadcast();
   late InterpreterTf interpreter;
   late int _inferenceResult;
+  //per la grafica
+  Function(List<List<double>>, String) _onData;
 
   //constructor
-  Consumer(this._sensorDataStream, String modelName) {
+  Consumer(this._sensorDataStream, String modelName, this._onData) {
     interpreter = InterpreterTf(modelName);
     _streamHandling = _sensorDataStream.listen((window) {
       print("dato letto: $window");
